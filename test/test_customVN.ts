@@ -7,7 +7,7 @@ import { Signing } from "./encrypt";
 
 
 
-describe("Background", function () {
+describe("CustomVoiceNFT", function () {
     let background: Contract;
     const quantity = 5000;
     let owner: SignerWithAddress;
@@ -17,31 +17,28 @@ describe("Background", function () {
   
     beforeEach(async function () {
       [owner, addr] = await ethers.getSigners();
-  
-      const Background = await ethers.getContractFactory("Background");
+      const Background = await ethers.getContractFactory("CustomVoiceNFT");
       background = await Background.deploy();
       await background.deployed();
+
+      const tx = await background.connect(owner).setBaseURI(baseUri);
+      
     })
   
-    describe("Mint", function () {
-      it("test4", async function () {
+    describe("Success Scenario", function () {
+      it("mint", async function () {
         let sign = Signing(addr.address, background.address, customUri);
         console.log(background.address);
         console.log(sign);
   
-        const tx = await background.connect(addr).publicSale(sign.cid, sign.nonce, sign.hash, sign.signature);
+        const tx = await background.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
         const receipt = await tx.wait();
   
 
-        console.log(tx);
+        // console.log(tx);
 
 
         expect(1).to.not.be.undefined;
-
-        // // console.log('total ether spent on gas for transaction: \t', ethers.utils.formatEther(receipt.gasUsed.mul(receipt.effectiveGasPrice)))
-        // // console.log('balance difference minus transaction value: \t', ethers.utils.formatEther(addr1Bal.sub(await provider.getBalance(addr1.address)).sub(txValue)))
-      
-        // const tx2 = await background.connect(owner).tokenURI(0);
         
       });
   
