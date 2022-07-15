@@ -10,9 +10,8 @@ contract CustomVoiceNFT is ERC721A, Ownable {
     using ECDSA for bytes32;
 
     //TODO constructor 고려하기
-    uint256 public count;
     address public ownerAddr;
-    address private _systemAddress = 0xdaCa757514D2572d1E64cB8AbA678ecafA0D6e3D;
+    address private systemAddress;
     bool public isMintLive;
     string public baseTokenURI;
 
@@ -22,9 +21,12 @@ contract CustomVoiceNFT is ERC721A, Ownable {
     event MintLiveLog(bool live);
     event MintLog(bool live);
 
-    constructor() ERC721A("My Test", "MTS") {
-        count = 0;
+    constructor(string memory _baseTokenURI, address _systemAddress)
+        ERC721A("My Test", "MTS")
+    {
         ownerAddr = msg.sender;
+        baseTokenURI = _baseTokenURI;
+        systemAddress = _systemAddress;
     }
 
     modifier checkSignature(
@@ -55,6 +57,7 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         // start minting
         customUrl[_nextTokenId()] = cid;
         _mint(msg.sender, 1);
+
     }
 
     //=============================================================
@@ -66,7 +69,7 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         returns (bool)
     {
         return
-            _systemAddress == hash.toEthSignedMessageHash().recover(signature);
+            systemAddress == hash.toEthSignedMessageHash().recover(signature);
     }
 
     function hashTransaction(
@@ -95,8 +98,19 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         baseTokenURI = baseURI;
     }
 
-    function _baseURI() internal view override returns (string memory) {
-        return baseTokenURI;
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken(); //_baseURI();
+
+        string memory end = bytes(baseTokenURI).length != 0
+            ? string(abi.encodePacked(baseTokenURI, customUrl[tokenId]))
+            : "";
+        return end;
     }
 
     //=============================================================
@@ -119,7 +133,7 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         uint256[] memory list = new uint256[](holdingAmount);
 
         unchecked {
-            for (uint256 i; i < count; i++) {
+            for (uint256 i; i < _nextTokenId()-1; i++) {
                 TokenOwnership memory ownership = _ownershipAt(i);
 
                 if (ownership.burned) {
