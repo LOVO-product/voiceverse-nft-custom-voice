@@ -9,14 +9,15 @@ import "hardhat/console.sol";
 contract CustomVoiceNFT is ERC721A, Ownable {
     using ECDSA for bytes32;
 
+    //TODO constructor 고려하기
     uint256 public count;
     address public ownerAddr;
     address private _systemAddress = 0xdaCa757514D2572d1E64cB8AbA678ecafA0D6e3D;
-    mapping(string => bool) public usedNonces;
-    mapping(uint256 => string) public customUrl;
     bool public isMintLive;
     string public baseTokenURI;
 
+    mapping(string => bool) public usedNonces;
+    mapping(uint256 => string) public customUrl;
 
     event MintLiveLog(bool live);
     event MintLog(bool live);
@@ -26,19 +27,28 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         ownerAddr = msg.sender;
     }
 
-    function publicMint(
+    modifier checkSignature(
         string memory cid,
         string memory customNonce,
         bytes32 hash,
         bytes memory signature
-    ) external payable {
-        // signature realted
+    ) {
         require(matchSigner(hash, signature), "Mint through website");
         require(!usedNonces[customNonce], "Hash reused");
         require(
             hashTransaction(msg.sender, cid, customNonce) == hash,
             "Hash failed"
         );
+        _;
+    }
+
+    function publicMint(
+        string memory cid,
+        string memory customNonce,
+        bytes32 hash,
+        bytes memory signature
+    ) external checkSignature(cid, customNonce, hash, signature) {
+        require(isMintLive, "Not live");
 
         usedNonces[customNonce] = true;
 

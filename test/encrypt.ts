@@ -23,7 +23,7 @@ const signMessage = (msgHash: string, privateKey: string) => {
 
 // Signing the message at backend.
 // You can store the data at database or check for Nonce conflict 
-export const Signing = (address: string, ContractAddress: string, cid: string) => {
+export const Signing = (address: string, ContractAddress: string, cid: string, privateKey: string) => {
   const newNonce = generateNonce();
  
   const hash = mintMsgHash(
@@ -33,7 +33,7 @@ export const Signing = (address: string, ContractAddress: string, cid: string) =
     newNonce    
   );
 
-  const signner = signMessage(hash, '0x4dfc9e11b48940aef89baf6a525fa7840caffd1cd3a2ccf6ec0cff78f8898ebe');
+  const signner = signMessage(hash, privateKey);
   
   return {
     cid: cid,
