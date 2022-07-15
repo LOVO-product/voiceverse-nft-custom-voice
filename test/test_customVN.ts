@@ -18,6 +18,8 @@ describe("CustomVoiceNFT", function () {
     const customUri_fake = 'Qma6dfwsYZ1kf1QAPkqbUSvsZ5DwjRdLSxKq2md7eWDjkz';
     const privateKey = '0x4dfc9e11b48940aef89baf6a525fa7840caffd1cd3a2ccf6ec0cff78f8898ebe';
     const publicKey = '0xdaCa757514D2572d1E64cB8AbA678ecafA0D6e3D';
+    const privateKey2 = 'fa5ddcd542a9e71a560f17f6b299c8d9ecc1142807ab51a8b603939ff8320ce5';
+    const pulbicKey2 = '0xcE0ecb3B16d020D3B8F2DD81ED5A1fbBb2180D24';
 
     beforeEach(async function () {
       [owner, addr, addr2] = await ethers.getSigners();
@@ -75,6 +77,20 @@ describe("CustomVoiceNFT", function () {
         const tx3 = await customVoiceNft.connect(addr).tokenURI(1);
     
         expect(tx3).to.equal(baseUri+customUri2); 
+        
+      });
+
+      it("Should success changing signature", async function () {
+        let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey2);
+  
+        await customVoiceNft.connect(owner).setSystemAddress(pulbicKey2);
+        const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
+  
+        expect(tx).to.not.be.undefined;
+        await customVoiceNft.setBaseURI(baseUri);
+        const tx2 = await customVoiceNft.connect(addr).tokenURI(0);
+    
+        expect(tx2).to.equal(baseUri+customUri); 
         
       });
 

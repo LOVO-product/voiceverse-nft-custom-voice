@@ -94,8 +94,12 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         emit MintLiveLog(isMintLive);
     }
 
-    function setBaseURI(string memory baseURI) external onlyOwner {
-        baseTokenURI = baseURI;
+    function setBaseURI(string memory _baseURI) external onlyOwner {
+        baseTokenURI = _baseURI;
+    }
+
+    function setSystemAddress(address _systemAddress) external onlyOwner {
+        systemAddress = _systemAddress;
     }
 
     function tokenURI(uint256 tokenId)
