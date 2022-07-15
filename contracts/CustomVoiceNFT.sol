@@ -9,17 +9,18 @@ import "hardhat/console.sol";
 contract CustomVoiceNFT is ERC721A, Ownable {
     using ECDSA for bytes32;
 
-    //TODO constructor 고려하기
-    address public ownerAddr;
-    address private systemAddress;
+    //TODO struct 고려하기
+    address public ownerAddr;//20byte
+    address private systemAddress;//20byte
+    string public baseTokenURI;//34 byte ->takes 64 byte
+
     bool public isMintLive;
-    string public baseTokenURI;
 
     mapping(string => bool) public usedNonces;
     mapping(uint256 => string) public customUrl;
 
     event MintLiveLog(bool live);
-    event MintLog(bool live);
+    event MintLog(address indexed to, uint256 indexed tokenId);
 
     constructor(string memory _baseTokenURI, address _systemAddress)
         ERC721A("My Test", "MTS")
@@ -56,6 +57,7 @@ contract CustomVoiceNFT is ERC721A, Ownable {
 
         // start minting
         customUrl[_nextTokenId()] = cid;
+        emit MintLog(msg.sender, _nextTokenId());
         _mint(msg.sender, 1);
 
     }
