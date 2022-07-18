@@ -72,6 +72,7 @@ describe("CustomVoiceNFT", function () {
 
       let sign2 = Signing(addr.address, customVoiceNft.address, customUri2, privateKey);
       await customVoiceNft.connect(addr).publicMint(sign2.cid, sign2.nonce, sign2.hash, sign2.signature);
+      
       const tx3 = await customVoiceNft.connect(addr).tokenURI(1);
 
       expect(tx3).to.equal(baseUri + customUri2);
@@ -119,12 +120,16 @@ describe("CustomVoiceNFT", function () {
 
       it("Should fail mint - didn't signed in properly", async function () {
 
-        let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
-        const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
-
+        let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey2);
+       
         await expect(
-          customVoiceNft.connect(addr).publicMint(customUri_fake, sign.nonce, sign.hash, sign.signature)
-        ).to.be.revertedWith("Hash reused");
+          customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature)
+        ).to.be.revertedWith("Mint through website");
+
+
+        // const receipt = await txmint.wait();
+
+        // console.log(`mint gas: ${receipt.gasUsed}`);
 
       });
 
@@ -133,7 +138,7 @@ describe("CustomVoiceNFT", function () {
         const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
 
         await expect(
-          customVoiceNft.connect(addr).publicMint(customUri_fake, sign.nonce, sign.hash, sign.signature)
+          customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature)
         ).to.be.revertedWith("Hash reused");
 
       });
@@ -148,7 +153,7 @@ describe("CustomVoiceNFT", function () {
 
       });
 
-      it("Should fail mint - tried other person's ", async function () {
+      it("Should fail mint - used other person's data", async function () {
         let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
 
         await expect(
