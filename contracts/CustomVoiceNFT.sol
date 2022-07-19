@@ -4,15 +4,13 @@ pragma solidity ^0.8.15;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "hardhat/console.sol";
 
 contract CustomVoiceNFT is ERC721A, Ownable {
     using ECDSA for bytes32;
 
-    //TODO struct 고려하기
-    address public ownerAddr;//20byte
-    address private systemAddress;//20byte
-    string public baseTokenURI;//34 byte ->takes 64 byte
+    address public ownerAddr;
+    address private systemAddress;
+    string public baseTokenURI;
 
     bool public isMintLive;
 
@@ -23,7 +21,7 @@ contract CustomVoiceNFT is ERC721A, Ownable {
     event MintLog(address indexed to, uint256 indexed tokenId);
 
     constructor(string memory _baseTokenURI, address _systemAddress)
-        ERC721A("My Test", "MTS")
+        ERC721A("MyTestNFT", "MTS")
     {
         ownerAddr = msg.sender;
         baseTokenURI = _baseTokenURI;
@@ -54,7 +52,6 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         require(isMintLive, "Not live");
 
         usedNonces[customNonce] = true;
-
         // start minting
         customUrl[_nextTokenId()] = cid;
         emit MintLog(msg.sender, _nextTokenId());
