@@ -16,12 +16,13 @@ contract CustomVoiceNFT is ERC721A, Ownable {
 
     mapping(string => bool) public usedNonces;
     mapping(uint256 => string) public customUrl;
+    mapping(address => bool) public allowList;
 
     event MintLiveLog(bool live);
     event MintLog(address indexed to, uint256 indexed tokenId);
 
     constructor(string memory _baseTokenURI, address _systemAddress)
-        ERC721A("MyTestNFT", "MTS")
+        ERC721A("Custom Voice Essence", "CVE")
     {
         ownerAddr = msg.sender;
         baseTokenURI = _baseTokenURI;
@@ -29,34 +30,37 @@ contract CustomVoiceNFT is ERC721A, Ownable {
     }
 
     modifier checkSignature(
-        string memory cid,
-        string memory customNonce,
-        bytes32 hash,
-        bytes memory signature
+        string memory _cid,
+        string memory _customNonce,
+        bytes32 _hash,
+        bytes memory _signature
     ) {
-        require(matchSigner(hash, signature), "Mint through website");
-        require(!usedNonces[customNonce], "Hash reused");
+        require(matchSigner(_hash, _signature), "Mint through website");
+        require(!usedNonces[_customNonce], "Hash reused");
         require(
-            hashTransaction(msg.sender, cid, customNonce) == hash,
+            hashTransaction(msg.sender, _cid, _customNonce) == _hash,
             "Hash failed"
         );
         _;
     }
 
     function publicMint(
-        string memory cid,
-        string memory customNonce,
-        bytes32 hash,
-        bytes memory signature
-    ) external checkSignature(cid, customNonce, hash, signature) {
+        string memory _cid,
+        string memory _customNonce,
+        bytes32 _hash,
+        bytes memory _signature
+    ) external checkSignature(_cid, _customNonce, _hash, _signature) {
         require(isMintLive, "Not live");
+        if (msg.sender != tx.origin) {
+            //prevent bots
+            require(allowList[msg.sender], "Not allowed contract");
+        }
 
-        usedNonces[customNonce] = true;
+        usedNonces[_customNonce] = true;
         // start minting
-        customUrl[_nextTokenId()] = cid;
+        customUrl[_nextTokenId()] = _cid;
         emit MintLog(msg.sender, _nextTokenId());
         _mint(msg.sender, 1);
-
     }
 
     //=============================================================
@@ -101,6 +105,13 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         systemAddress = _systemAddress;
     }
 
+    function addAllowList(address _address_CA, bool _isAllowed)
+        external
+        onlyOwner
+    {
+        allowList[_address_CA] = _isAllowed;
+    }
+
     function tokenURI(uint256 tokenId)
         public
         view
@@ -136,7 +147,7 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         uint256[] memory list = new uint256[](holdingAmount);
 
         unchecked {
-            for (uint256 i; i < _nextTokenId()-1; i++) {
+            for (uint256 i; i < _nextTokenId() - 1; i++) {
                 TokenOwnership memory ownership = _ownershipAt(i);
 
                 if (ownership.burned) {

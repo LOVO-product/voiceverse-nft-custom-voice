@@ -36,6 +36,7 @@ describe("CustomVoiceNFT", function () {
       await customVoiceNft.connect(owner).toggleMintLive();
     })
 
+
     it("Should success mint", async function () {
       let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
       // console.log(customVoiceNft.address);
@@ -72,7 +73,7 @@ describe("CustomVoiceNFT", function () {
 
       let sign2 = Signing(addr.address, customVoiceNft.address, customUri2, privateKey);
       await customVoiceNft.connect(addr).publicMint(sign2.cid, sign2.nonce, sign2.hash, sign2.signature);
-      
+
       const tx3 = await customVoiceNft.connect(addr).tokenURI(1);
 
       expect(tx3).to.equal(baseUri + customUri2);
@@ -93,7 +94,24 @@ describe("CustomVoiceNFT", function () {
 
     });
 
+    it("Should success adding CA and minting", async function () {
 
+
+      const Background = await ethers.getContractFactory("Attacker");
+      let attacker = await Background.deploy();
+      await attacker.deployed(); 
+
+
+      await customVoiceNft.connect(owner).addAllowList(attacker.address, true);
+
+
+      let sign = Signing(attacker.address, customVoiceNft.address, customUri, privateKey);
+      await attacker.tryMint(customVoiceNft.address, sign.cid, sign.nonce, sign.hash, sign.signature);
+            
+      expect(3).to.equal(3);
+  
+    
+    });
 
 
   })
@@ -121,7 +139,7 @@ describe("CustomVoiceNFT", function () {
       it("Should fail mint - didn't signed in properly", async function () {
 
         let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey2);
-       
+
         await expect(
           customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature)
         ).to.be.revertedWith("Mint through website");
@@ -161,6 +179,22 @@ describe("CustomVoiceNFT", function () {
         ).to.be.revertedWith("Hash failed");
 
 
+      });
+
+
+      it("Should fail mint -  externalCall", async function () {
+        const Background = await ethers.getContractFactory("Attacker");
+        let attacker = await Background.deploy();
+        await attacker.deployed(); 
+  
+  
+        let sign = Signing(attacker.address, customVoiceNft.address, customUri, privateKey);
+        // await attacker.tryMint(customVoiceNft.address, sign.cid, sign.nonce, sign.hash, sign.signature);
+              
+    
+        await expect(
+          attacker.tryMint(customVoiceNft.address, sign.cid, sign.nonce, sign.hash, sign.signature)
+        ).to.be.revertedWith("Not allowed contract");
       });
     })
 

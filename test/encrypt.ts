@@ -22,7 +22,6 @@ const signMessage = (msgHash: string, privateKey: string) => {
 };
 
 // Signing the message at backend.
-// You can store the data at database or check for Nonce conflict 
 export const Signing = (address: string, ContractAddress: string, cid: string, privateKey: string) => {
   const newNonce = generateNonce();
  
