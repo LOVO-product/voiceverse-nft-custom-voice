@@ -53,7 +53,7 @@ contract CustomVoiceNFT is ERC721A, Ownable {
         require(isMintLive, "Not live");
         if (msg.sender != tx.origin) {
             //prevent bots
-            require(allowList[msg.sender], "Not allowed contract");
+            require(allowList[msg.sender], "Contract not allowed");
         }
 
         usedNonces[_customNonce] = true;

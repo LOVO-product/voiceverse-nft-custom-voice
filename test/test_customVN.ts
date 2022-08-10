@@ -38,20 +38,25 @@ describe("CustomVoiceNFT", function () {
 
 
     it("Should success mint", async function () {
+      //Encryption should be done in the server
       let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
-      // console.log(customVoiceNft.address);
-      // console.log(sign)
+
+
+      //Mint with data from server
       await expect(
         customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature)
       ).to.emit(customVoiceNft, "MintLog").withArgs(addr.address, 0);
     });
 
     it("Should success setting base & custom uri", async function () {
+      //Encryption should be done in the server
       let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
 
+      //Mint with data from server
       const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
-
       expect(tx).to.not.be.undefined;
+
+      //Set base uri
       await customVoiceNft.setBaseURI(baseUri);
       const tx2 = await customVoiceNft.connect(addr).tokenURI(0);
 
@@ -60,6 +65,7 @@ describe("CustomVoiceNFT", function () {
     });
 
     it("Should success minting 2 nfts, one by one", async function () {
+      //Encryption should be done in the server
       let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
 
       const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
@@ -70,7 +76,7 @@ describe("CustomVoiceNFT", function () {
 
       expect(tx2).to.equal(baseUri + customUri);
 
-
+      //Encryption should be done in the server
       let sign2 = Signing(addr.address, customVoiceNft.address, customUri2, privateKey);
       await customVoiceNft.connect(addr).publicMint(sign2.cid, sign2.nonce, sign2.hash, sign2.signature);
 
@@ -81,36 +87,37 @@ describe("CustomVoiceNFT", function () {
     });
 
     it("Should success changing signature", async function () {
+      //Encryption should be done in the server - used new pair of address
       let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey2);
 
+      //Set new public key
       await customVoiceNft.connect(owner).setSystemAddress(pulbicKey2);
-      const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
-
-      expect(tx).to.not.be.undefined;
+      //Set baseURI
       await customVoiceNft.setBaseURI(baseUri);
+
+      //And mint
+      const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
+      expect(tx).to.not.be.undefined;
       const tx2 = await customVoiceNft.connect(addr).tokenURI(0);
 
       expect(tx2).to.equal(baseUri + customUri);
 
     });
 
-    it("Should success adding CA and minting", async function () {
+    it("Should success adding CA and minting from external CA", async function () {
 
-
+      //Set caller contract
       const Background = await ethers.getContractFactory("Attacker");
       let attacker = await Background.deploy();
-      await attacker.deployed(); 
-
-
+      await attacker.deployed();
+      //Add caller contract to the allow list
       await customVoiceNft.connect(owner).addAllowList(attacker.address, true);
 
-
+      //Encryption should be done in the server 
       let sign = Signing(attacker.address, customVoiceNft.address, customUri, privateKey);
-      await attacker.tryMint(customVoiceNft.address, sign.cid, sign.nonce, sign.hash, sign.signature);
-            
-      expect(3).to.equal(3);
-  
-    
+      let tx = await attacker.tryMint(customVoiceNft.address, sign.cid, sign.nonce, sign.hash, sign.signature);
+
+      expect(tx).to.not.be.undefined;
     });
 
 
@@ -130,7 +137,7 @@ describe("CustomVoiceNFT", function () {
 
     describe("Should Fail2", function () {
       beforeEach(async function () {
-
+        //activate mint live toggle everytime
         await expect(
           customVoiceNft.connect(owner).toggleMintLive()
         ).to.emit(customVoiceNft, "MintLiveLog").withArgs(true);
@@ -138,16 +145,12 @@ describe("CustomVoiceNFT", function () {
 
       it("Should fail mint - didn't signed in properly", async function () {
 
+        //pair of privatekey and public key doesn't match
         let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey2);
 
         await expect(
           customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature)
         ).to.be.revertedWith("Mint through website");
-
-
-        // const receipt = await txmint.wait();
-
-        // console.log(`mint gas: ${receipt.gasUsed}`);
 
       });
 
@@ -155,6 +158,7 @@ describe("CustomVoiceNFT", function () {
         let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
         const tx = await customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature);
 
+        //Tried to mint twice with same data
         await expect(
           customVoiceNft.connect(addr).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature)
         ).to.be.revertedWith("Hash reused");
@@ -162,8 +166,10 @@ describe("CustomVoiceNFT", function () {
       });
 
       it("Should fail mint - changed customUri", async function () {
+        //Encryption should be done in the server - used new pair of address
         let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
 
+        //Tried to put fake custom uri
         await expect(
           customVoiceNft.connect(addr).publicMint(customUri_fake, sign.nonce, sign.hash, sign.signature)
         ).to.be.revertedWith("Hash failed");
@@ -172,10 +178,12 @@ describe("CustomVoiceNFT", function () {
       });
 
       it("Should fail mint - used other person's data", async function () {
+        //Encryption should be done in the server - used new pair of address
         let sign = Signing(addr.address, customVoiceNft.address, customUri, privateKey);
 
+        //Tried to use other address' sign data
         await expect(
-          customVoiceNft.connect(addr2).publicMint(customUri_fake, sign.nonce, sign.hash, sign.signature)
+          customVoiceNft.connect(addr2).publicMint(sign.cid, sign.nonce, sign.hash, sign.signature)
         ).to.be.revertedWith("Hash failed");
 
 
@@ -183,18 +191,18 @@ describe("CustomVoiceNFT", function () {
 
 
       it("Should fail mint -  externalCall", async function () {
+        //Set caller contract
         const Background = await ethers.getContractFactory("Attacker");
         let attacker = await Background.deploy();
-        await attacker.deployed(); 
-  
-  
+        await attacker.deployed();
+
+        //Encryption should be done in the server - used new pair of address
         let sign = Signing(attacker.address, customVoiceNft.address, customUri, privateKey);
-        // await attacker.tryMint(customVoiceNft.address, sign.cid, sign.nonce, sign.hash, sign.signature);
-              
-    
+
+        //Try externall call without whitelisting
         await expect(
           attacker.tryMint(customVoiceNft.address, sign.cid, sign.nonce, sign.hash, sign.signature)
-        ).to.be.revertedWith("Not allowed contract");
+        ).to.be.revertedWith("Contract not allowed");
       });
     })
 
